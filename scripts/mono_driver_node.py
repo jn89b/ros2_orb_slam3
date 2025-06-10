@@ -71,9 +71,13 @@ class MonoDriver(Node):
         print()
 
         # Global path definitions
-        self.home_dir = str(Path.home()) + "/ros2_test/src/ros2_orb_slam3" #! Change this to match path to your workspace
+        self.home_dir = str(Path.home()) + "/develop_ws/src/ros2_orb_slam3" #! Change this to match path to your workspace
+        cwd = os.getcwd() # Get the current working directory
+        print(f"Current working directory: {cwd}\n")
+        self.home_dir = "/develop_ws/src/ros2_orb_slam3"# Get the absolute path to the home directory
         self.parent_dir = "TEST_DATASET" #! Change or provide path to the parent directory where data for all image sequences are stored
         self.image_sequence_dir = self.home_dir + "/" + self.parent_dir + "/" + self.image_seq # Full path to the image sequence folder
+        
 
         print(f"self.image_sequence_dir: {self.image_sequence_dir}\n")
 
