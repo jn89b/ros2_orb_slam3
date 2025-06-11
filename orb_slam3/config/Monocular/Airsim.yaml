@@ -21,10 +21,10 @@ Camera1.p2: -0.000030
 Camera1.k3:  0.000000
 
 # Camera frames per second
-Camera.fps: 20
+Camera.fps: 30
 
 # Color order (0: BGR, 1: RGB; ignored if grayscale)
-Camera.RGB: 0
+Camera.RGB: 1
 
 # Camera resolution
 Camera.width:  640
@@ -49,7 +49,4 @@ Viewer.PointSize:         2.0
 Viewer.CameraSize:        0.08
 Viewer.CameraLineWidth:   3.0
 Viewer.ViewpointX:        0.0
-Viewer.ViewpointY:      -0.5 
-Viewer.ViewpointZ: -1.8
-Viewer.ViewpointF: 500.0
-
+Viewer.ViewpointY:

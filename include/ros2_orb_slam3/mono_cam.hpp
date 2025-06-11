@@ -67,7 +67,7 @@ class MonoCam : public rclcpp::Node
         
         // Class internal variables
         std::string homeDir = "";
-        std::string packagePath = "ros2_test/src/ros2_orb_slam3/"; //! Change to match path to your workspace
+        std::string packagePath = "/home/justin/ros2/src/ros2_orb_slam3/"; //! Change to match path to your workspace
         std::string OPENCV_WINDOW = ""; // Set during initialization
         std::string nodeName = ""; // Name of this node
         std::string vocFilePath = ""; // Path to ORB vocabulary provided by DBoW2 package
@@ -77,6 +77,8 @@ class MonoCam : public rclcpp::Node
         std::string subexperimentconfigName = ""; // Subscription topic name
         std::string pubconfigackName = ""; // Publisher topic name
         std::string subImgMsgName = ""; // Topic to subscribe to receive RGB images from a python node
+    
+        cv_bridge::CvImagePtr cv_ptr; //* Does not create a copy, memory efficient
 
         //* Definitions of publisher and subscribers
         // rclcpp::Subscription<std_msgs::msg::String>::SharedPtr expConfig_subscription_;
@@ -97,10 +99,9 @@ class MonoCam : public rclcpp::Node
         
         //* Helper functions
         // ORB_SLAM3::eigenMatXf convertToEigenMat(const std_msgs::msg::Float32MultiArray& msg); // Helper method, converts semantic matrix eigenMatXf, a Eigen 4x4 float matrix
-        void initializeVSLAM(std::string& configString); //* Method to bind an initialized VSLAM framework to this node
+        void initializeVSLAM(std::string configString); //* Method to bind an initialized VSLAM framework to this node
 
         double StampToSec(const std_msgs::msg::Header& header);
-
 };
 
 #endif

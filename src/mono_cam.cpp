@@ -30,9 +30,16 @@ MonoCam::MonoCam() :Node("mono_cam_cpp")
     //* HARDCODED, set paths
     if (vocFilePath == "file_not_set" || settingsFilePath == "file_not_set")
     {
+        RCLCPP_INFO(this->get_logger(), "File not set ......");
+
         pass;
         vocFilePath = homeDir + "/" + packagePath + "orb_slam3/Vocabulary/ORBvoc.txt.bin";
         settingsFilePath = homeDir + "/" + packagePath + "orb_slam3/config/Monocular/";
+    }
+    else{
+        RCLCPP_INFO(this->get_logger(), "File set ......");
+        vocFilePath = homeDir + "/" + packagePath + vocFilePath; // Example ros2_ws/src/ros2_orb_slam3/orb_slam3/Vocabulary/ORBvoc.txt.bin
+        settingsFilePath = homeDir + "/" + packagePath + settingsFilePath; // Example ros2_ws/src/ros2_orb_slam3/orb_slam3/config/Monocular/TUM2.yaml
     }
 
     // std::cout<<"vocFilePath: "<<vocFilePath<<std::endl;
@@ -42,18 +49,26 @@ MonoCam::MonoCam() :Node("mono_cam_cpp")
     RCLCPP_INFO(this->get_logger(), "nodeName %s", nodeName.c_str());
     RCLCPP_INFO(this->get_logger(), "voc_file %s", vocFilePath.c_str());
 
-    subImgMsgName = "/airsim_node/drone_1/front_center_custom/Scene/image"; // topic to receive RGB image messages
+    subImgMsgName = "/airsim"; // topic to receive RGB image messages
 
     //* subscrbite to the image messages coming from the Python driver node
-    subImgMsg_subscription_= this->create_subscription<sensor_msgs::msg::Image>(
-        subImgMsgName, 1, std::bind(&MonoCam::Img_callback, this, _1));
+    // subImgMsg_subscription_= this->create_subscription<sensor_msgs::msg::Image>(
+    //     subImgMsgName, 
+    //     10, 
+    //     std::bind(&MonoCam::Img_callback, this, _1));
+    subImgMsg_subscription_ = this->create_subscription<sensor_msgs::msg::Image>(
+        "/airsim/image_raw",
+        rclcpp::SensorDataQoS(),
+        std::bind(&MonoCam::Img_callback, this, std::placeholders::_1)
+    );
 
     //* subscribe to receive the timestep
     // subTimestepMsg_subscription_= this->create_subscription<std_msgs::msg::Float64>(
     //     subTimestepMsgName, 1, std::bind(&MonoCam::Timestep_callback, this, _1));
-
     
     RCLCPP_INFO(this->get_logger(), "Waiting to finish handshake ......");
+
+    initializeVSLAM("TUM1"); // Initialize the VSLAM framework with the node name as the config string
 
 }
 
@@ -68,7 +83,7 @@ MonoCam::~MonoCam()
 }
 
 //* Method to bind an initialized VSLAM framework to this node
-void MonoCam::initializeVSLAM(std::string& configString){
+void MonoCam::initializeVSLAM(std::string configString){
     
     // Watchdog, if the paths to vocabular and settings files are still not set
     if (vocFilePath == "file_not_set" || settingsFilePath == "file_not_set")
@@ -105,8 +120,10 @@ void MonoCam::Img_callback(const sensor_msgs::msg::Image& msg)
     try
     {
         //cv::Mat im =  cv_bridge::toCvShare(msg.img, msg)->image;
-        cv_ptr = cv_bridge::toCvCopy(msg); // Local scope
-        RCLCPP_ERROR(this->get_logger(),"Recieved reading image");
+        // cv_ptr = cv_bridge::toCvCopy(msg); // Local scope
+        cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
+
+        // RCLCPP_ERROR(this->get_logger(),"Recieved reading image");
         // DEBUGGING, Show image
         // Update GUI Window
         cv::imshow("test_window", cv_ptr->image);
@@ -123,8 +140,9 @@ void MonoCam::Img_callback(const sensor_msgs::msg::Image& msg)
     //* Perform all ORB-SLAM3 operations in Monocular mode
     //! Pose with respect to the camera coordinate frame not the world coordinate frame
     double time_s = StampToSec(msg.header);
+    // std::cout << "Time in seconds: " << time_s << std::endl; // Debug
     Sophus::SE3f Tcw = pAgent->TrackMonocular(cv_ptr->image, time_s); //* Tcw is the pose with respect to the camera coordinate frame
-    
+    std::cout << "Tcw: " << Tcw.matrix() << std::endl; // Debug
     //* An example of what can be done after the pose w.r.t camera coordinate frame is computed by ORB SLAM3
     //Sophus::SE3f Twc = Tcw.inverse(); //* Pose with respect to global image coordinate, reserved for future use
 
@@ -134,8 +152,7 @@ double MonoCam::StampToSec(const std_msgs::msg::Header& header)
 {
     //* Convert ROS time stamp to seconds
     rclcpp::Time time = header.stamp;
-    double sec = time.seconds();
-    
+    double seconds = time.seconds() + (time.nanoseconds() * pow(10,-9));
     // std::cout<<"StampToSec: "<<sec<<std::endl; // Debug
-    return sec;
+    return seconds;
 }
